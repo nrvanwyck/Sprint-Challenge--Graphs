@@ -5,6 +5,8 @@ from world import World
 import random
 from ast import literal_eval
 
+import json
+
 class Queue():
     def __init__(self):
         self.queue = []
@@ -84,33 +86,44 @@ world.load_graph(room_graph)
 # Print an ASCII map
 world.print_rooms()
 
-player = Player(world.starting_room)
+best_score = 959
+while True:
+    player = Player(world.starting_room)
 
-# Fill this out with directions to walk
-# traversal_path = ['n', 'n']
-traversal_path = []
+    # Fill this out with directions to walk
+    # traversal_path = ['n', 'n']
+    traversal_path = []
 
-traversal_graph = Traversal_Graph()
-traversal_graph.add_vertex(player.current_room)
+    traversal_graph = Traversal_Graph()
+    traversal_graph.add_vertex(player.current_room)
 
-while len(traversal_graph.vertices) < 500:
-    pre_move_room = player.current_room
-    exits = pre_move_room.get_exits()
-    unexplored = [option for option in exits if (
-        traversal_graph.vertices[pre_move_room.id][option] == '?')]
-    if len(unexplored) > 0:
-        move = random.choice(unexplored)
-        player.travel(move)
-        traversal_path.append(move)
-        post_move_room = player.current_room
-        if post_move_room.id not in traversal_graph.vertices:
-            traversal_graph.add_vertex(post_move_room)
-        traversal_graph.add_edge(pre_move_room, post_move_room, move)
-    else:
-        to_unexplored = traversal_graph.bfs_to_unexplored(player.current_room)
-        for move in to_unexplored:
+    while len(traversal_graph.vertices) < 500:
+        pre_move_room = player.current_room
+        exits = pre_move_room.get_exits()
+        unexplored = [option for option in exits if (
+            traversal_graph.vertices[pre_move_room.id][option] == '?')]
+        if len(unexplored) > 0:
+            move = random.choice(unexplored)
             player.travel(move)
             traversal_path.append(move)
+            post_move_room = player.current_room
+            if post_move_room.id not in traversal_graph.vertices:
+                traversal_graph.add_vertex(post_move_room)
+            traversal_graph.add_edge(pre_move_room, post_move_room, move)
+        else:
+            to_unexplored = traversal_graph.bfs_to_unexplored(player.current_room)
+            for move in to_unexplored:
+                player.travel(move)
+                traversal_path.append(move)
+
+    if len(traversal_path) < best_score:
+        best_score = len(traversal_path)
+        with open(f'traversal_in_{len(traversal_path)}_moves.txt', 'w') as file:
+            json.dump(traversal_path, file)
+
+# with open(f'traversal_in_959_moves.txt') as file:
+#     traversal_path = json.load(file)
+# player = Player(world.starting_room)
 
 # TRAVERSAL TEST
 visited_rooms = set()
